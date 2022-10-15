@@ -11,14 +11,14 @@ from torch import optim
 from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 
-from utils.data_loading import BasicDataset, CarvanaDataset
+from utils.data_loading import BasicDataset, CarvanaDataset, LightingDataset
 from utils.dice_score import dice_loss
 from evaluate import evaluate
 from unet import UNet
 
-dir_img = Path('/home/winter/code-resources/car-seg/train')
-dir_mask = Path('/home/winter/code-resources/car-seg/train_masks')
-dir_checkpoint = Path('./checkpoints/')
+dir_img = Path('/home/winter/code-resources/lighting/light-seg-sample/ldr_imgs')
+dir_mask = Path('/home/winter/code-resources/lighting/light-seg-sample/seg_labels')
+dir_checkpoint = Path('./lighting_checkpoints/')
 
 
 def train_net(net,
@@ -32,7 +32,7 @@ def train_net(net,
               amp: bool = False):
     # 1. Create dataset
     try:
-        dataset = CarvanaDataset(dir_img, dir_mask, img_scale)
+        dataset = LightingDataset(dir_img, dir_mask, img_scale)
     except (AssertionError, RuntimeError):
         dataset = BasicDataset(dir_img, dir_mask, img_scale)
 

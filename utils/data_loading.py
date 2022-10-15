@@ -57,10 +57,14 @@ class BasicDataset(Dataset):
         name = self.ids[idx]
         mask_file = list(self.masks_dir.glob(name + self.mask_suffix + '.*'))
         img_file = list(self.images_dir.glob(name + '.*'))
+        # print(f"mask_file: {mask_file}")
+        # print(f"img_file: {img_file}")
+        # print(f"mask_file count: {len(mask_file)}")
+        # print(f"img_file count: {len(img_file)}")
 
         assert len(img_file) == 1, f'Either no image or multiple images found for the ID {name}: {img_file}'
         assert len(mask_file) == 1, f'Either no mask or multiple masks found for the ID {name}: {mask_file}'
-        mask = self.load(mask_file[0])
+        mask = self.load(mask_file[0]).convert('L')
         img = self.load(img_file[0])
 
         assert img.size == mask.size, \
@@ -68,6 +72,7 @@ class BasicDataset(Dataset):
 
         img = self.preprocess(img, self.scale, is_mask=False)
         mask = self.preprocess(mask, self.scale, is_mask=True)
+        # print(f"shapes: img({img.shape}), mask({mask.shape})")
 
         return {
             'image': torch.as_tensor(img.copy()).float().contiguous(),
@@ -78,3 +83,7 @@ class BasicDataset(Dataset):
 class CarvanaDataset(BasicDataset):
     def __init__(self, images_dir, masks_dir, scale=1):
         super().__init__(images_dir, masks_dir, scale, mask_suffix='_mask')
+
+class LightingDataset(BasicDataset):
+    def __init__(self, images_dir, masks_dir, scale=1):
+        super().__init__(images_dir, masks_dir, scale, mask_suffix='_segmap')
