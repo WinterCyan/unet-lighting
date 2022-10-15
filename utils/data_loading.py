@@ -2,8 +2,10 @@ import logging
 from os import listdir
 from os.path import splitext
 from pathlib import Path
+from typing import overload
 
 import numpy as np
+# np.set_printoptions(threshold=np.inf)
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
@@ -64,7 +66,7 @@ class BasicDataset(Dataset):
 
         assert len(img_file) == 1, f'Either no image or multiple images found for the ID {name}: {img_file}'
         assert len(mask_file) == 1, f'Either no mask or multiple masks found for the ID {name}: {mask_file}'
-        mask = self.load(mask_file[0]).convert('L')
+        mask = self.load(mask_file[0])
         img = self.load(img_file[0])
 
         assert img.size == mask.size, \
@@ -72,7 +74,6 @@ class BasicDataset(Dataset):
 
         img = self.preprocess(img, self.scale, is_mask=False)
         mask = self.preprocess(mask, self.scale, is_mask=True)
-        # print(f"shapes: img({img.shape}), mask({mask.shape})")
 
         return {
             'image': torch.as_tensor(img.copy()).float().contiguous(),
@@ -87,3 +88,25 @@ class CarvanaDataset(BasicDataset):
 class LightingDataset(BasicDataset):
     def __init__(self, images_dir, masks_dir, scale=1):
         super().__init__(images_dir, masks_dir, scale, mask_suffix='_segmap')
+
+
+    def __getitem__(self, idx):
+        name = self.ids[idx]
+        mask_file = list(self.masks_dir.glob(name + self.mask_suffix + '.*'))
+        img_file = list(self.images_dir.glob(name + '.*'))
+
+        assert len(img_file) == 1, f'Either no image or multiple images found for the ID {name}: {img_file}'
+        assert len(mask_file) == 1, f'Either no mask or multiple masks found for the ID {name}: {mask_file}'
+        mask = self.load(mask_file[0])
+        img = self.load(img_file[0])
+
+        assert img.size == mask.size, \
+            f'Image and mask {name} should be the same size, but are {img.size} and {mask.size}'
+
+        img = self.preprocess(img, self.scale, is_mask=False)
+        mask = self.preprocess(mask, self.scale, is_mask=True)[:,:,0]/255
+
+        return {
+            'image': torch.as_tensor(img.copy()).float().contiguous(),
+            'mask': torch.as_tensor(mask.copy()).long().contiguous()
+        }
