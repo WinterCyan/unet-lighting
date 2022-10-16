@@ -17,7 +17,7 @@ from evaluate import evaluate
 from unet import UNet
 
 dir_img = Path('/home/winter/code-resources/lighting/light-seg-sample/ldr_imgs')
-dir_mask = Path('/home/winter/code-resources/lighting/light-seg-sample/seg_labels')
+dir_mask = Path('/home/winter/code-resources/lighting/light-seg-sample/seg_labels_pos')
 dir_checkpoint = Path('./lighting_checkpoints/')
 
 

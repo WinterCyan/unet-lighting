@@ -1,7 +1,7 @@
 import argparse
 import logging
 import os
-
+from pathlib import Path
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -78,7 +78,9 @@ def mask_to_image(mask: np.ndarray):
 
 if __name__ == '__main__':
     args = get_args()
-    in_files = args.input
+    args.model = Path("./lighting_checkpoints/checkpoint_epoch5.pth")
+    args.input = ("/home/winter/code-resources/lighting/real_capture")
+    in_files = [os.path.join(args.input, n) for n in os.listdir(args.input) if not n.endswith('_map.jpg')]
     out_files = get_output_filenames(args)
 
     net = UNet(n_channels=3, n_classes=2, bilinear=args.bilinear)
@@ -103,7 +105,8 @@ if __name__ == '__main__':
                            device=device)
 
         if not args.no_save:
-            out_filename = out_files[i]
+            # out_filename = out_files[i]
+            out_filename = filename.replace('.jpg', '_map.jpg')
             result = mask_to_image(mask)
             result.save(out_filename)
             logging.info(f'Mask saved to {out_filename}')

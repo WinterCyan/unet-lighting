@@ -2,6 +2,7 @@ import logging
 from os import listdir
 from os.path import splitext
 from pathlib import Path
+from random import shuffle
 from typing import overload
 
 import numpy as np
@@ -19,7 +20,8 @@ class BasicDataset(Dataset):
         self.scale = scale
         self.mask_suffix = mask_suffix
 
-        self.ids = [splitext(file)[0] for file in listdir(images_dir) if not file.startswith('.')]
+        ids = [splitext(file)[0] for file in listdir(images_dir) if not file.startswith('.')]
+        self.ids = shuffle(ids)
         if not self.ids:
             raise RuntimeError(f'No input file found in {images_dir}, make sure you put your images there')
         logging.info(f'Creating dataset with {len(self.ids)} examples')
@@ -86,14 +88,24 @@ class CarvanaDataset(BasicDataset):
         super().__init__(images_dir, masks_dir, scale, mask_suffix='_mask')
 
 class LightingDataset(BasicDataset):
-    def __init__(self, images_dir, masks_dir, scale=1):
-        super().__init__(images_dir, masks_dir, scale, mask_suffix='_segmap')
+    def __init__(self, images_dir, masks_dir, scale=1, mask_suffix='_segmap'):
+        self.images_dir = Path(images_dir)
+        self.masks_dir = Path(masks_dir)
+        assert 0 < scale <= 1, 'Scale must be between 0 and 1'
+        self.scale = scale
+        self.mask_suffix = mask_suffix
+
+        self.ids = [splitext(file)[0] for file in listdir(masks_dir) if not file.startswith('.')]
+        shuffle(self.ids)
+        if not self.ids:
+            raise RuntimeError(f'No input file found in {images_dir}, make sure you put your images there')
+        logging.info(f'Creating dataset with {len(self.ids)} examples')
 
 
     def __getitem__(self, idx):
         name = self.ids[idx]
-        mask_file = list(self.masks_dir.glob(name + self.mask_suffix + '.*'))
-        img_file = list(self.images_dir.glob(name + '.*'))
+        mask_file = list(self.masks_dir.glob(name + '.*'))
+        img_file = list(self.images_dir.glob(name.replace(self.mask_suffix,'') + '.*'))
 
         assert len(img_file) == 1, f'Either no image or multiple images found for the ID {name}: {img_file}'
         assert len(mask_file) == 1, f'Either no mask or multiple masks found for the ID {name}: {mask_file}'
